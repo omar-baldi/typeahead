@@ -9,15 +9,20 @@ type TypeAheadData = {
 type Props = {
   data: TypeAheadData[];
   debounce?: number;
+  maxOptions?: number;
+  highlight?: boolean;
   label?: string;
   onOptionClick?: (v: TypeAheadData["value"]) => void;
 } & React.ComponentProps<"input">;
 
+const DEFAULT_MAX_OPTIONS = 10;
 const DEFAULT_DEBOUNCE_VALUE = 1000;
 
 export default function TypeAhead({
   data,
   debounce = DEFAULT_DEBOUNCE_VALUE,
+  maxOptions = DEFAULT_MAX_OPTIONS,
+  highlight = false,
   label,
   onOptionClick,
   ...inputProps
@@ -28,6 +33,7 @@ export default function TypeAhead({
   const typeaheadOptionsElements = useMemo<JSX.Element[]>(() => {
     return data
       .filter((opt) => opt.value.toLowerCase().match(debouncedInputV.toLowerCase()))
+      .slice(0, maxOptions)
       .map(({ label, value }) => {
         const startIdx = label.indexOf(debouncedInputV);
         const endIdx = startIdx + (debouncedInputV.length - 1);
@@ -42,18 +48,20 @@ export default function TypeAhead({
           value,
         };
       })
-      .map(({ chars, value }) => {
+      .map(({ chars, value }, optionIdx) => {
         return (
-          <div key={undefined} style={{ textAlign: "start", margin: "1rem 0" }}>
-            {chars.map(({ char, isHighlighted }) => {
-              const charColor: React.CSSProperties["color"] = isHighlighted
-                ? "orange"
-                : "initial";
+          <div
+            key={`option-${optionIdx}`}
+            style={{ textAlign: "start", margin: "1rem 0" }}
+          >
+            {chars.map(({ char, isHighlighted }, charIdx) => {
+              const charFontWeight: React.CSSProperties["fontWeight"] =
+                isHighlighted && highlight ? "bolder" : "lighter";
 
               return (
                 <span
-                  key={undefined}
-                  style={{ color: charColor }}
+                  key={`char-${charIdx}`}
+                  style={{ fontWeight: charFontWeight }}
                   onClick={() => onOptionClick?.(value)}
                 >
                   {char}
@@ -63,16 +71,20 @@ export default function TypeAhead({
           </div>
         );
       });
-  }, [debouncedInputV, data, onOptionClick]);
+  }, [debouncedInputV, data, highlight, maxOptions, onOptionClick]);
 
   return (
     <>
-      {label && <label htmlFor="typeahead-input">{label}</label>}
+      {label && (
+        <>
+          <label htmlFor={inputProps.name}>{label}</label>
+          <br />
+        </>
+      )}
 
       <input
         {...inputProps}
         type="text"
-        name="typeahead-input"
         value={inputV}
         onChange={(e) => setInputV(e.target.value)}
       />
