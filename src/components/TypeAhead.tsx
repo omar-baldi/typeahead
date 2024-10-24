@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { findAllSubstringIndexes } from "../helpers";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
 type TypeAheadData = {
@@ -11,6 +12,7 @@ type Props = {
   debounce?: number;
   maxOptions?: number;
   highlight?: boolean;
+  highlightAll?: boolean;
   label?: string;
   onOptionClick?: (v: TypeAheadData["value"]) => void;
 } & React.ComponentProps<"input">;
@@ -23,6 +25,7 @@ export default function TypeAhead({
   debounce = DEFAULT_DEBOUNCE_VALUE,
   maxOptions = DEFAULT_MAX_OPTIONS,
   highlight = false,
+  highlightAll = false,
   label,
   onOptionClick,
   ...inputProps
@@ -35,12 +38,19 @@ export default function TypeAhead({
       .filter((opt) => opt.value.toLowerCase().match(debouncedInputV.toLowerCase()))
       .slice(0, maxOptions)
       .map(({ label, value }) => {
-        const startIdx = label.indexOf(debouncedInputV);
-        const endIdx = startIdx + (debouncedInputV.length - 1);
+        const indexes = highlightAll
+          ? findAllSubstringIndexes(debouncedInputV.toLowerCase(), label)
+          : (() => {
+              const startIdx = label.indexOf(debouncedInputV);
+              const endIdx = startIdx + (debouncedInputV.length - 1);
+              return [[startIdx, endIdx] as const];
+            })();
 
         const chars = [...label].map((char, charIdx) => ({
           char,
-          isHighlighted: charIdx >= startIdx && charIdx <= endIdx,
+          isHighlighted: indexes.some(
+            ([startIdx, endIdx]) => charIdx >= startIdx && charIdx <= endIdx
+          ),
         }));
 
         return {
@@ -71,7 +81,7 @@ export default function TypeAhead({
           </div>
         );
       });
-  }, [debouncedInputV, data, highlight, maxOptions, onOptionClick]);
+  }, [debouncedInputV, data, highlight, maxOptions, highlightAll, onOptionClick]);
 
   return (
     <>
