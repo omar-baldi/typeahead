@@ -63,6 +63,7 @@ export default function TypeAhead({
           <div
             key={`option-${optionIdx}`}
             style={{ textAlign: "start", margin: "1rem 0" }}
+            data-testid="typeahead-option"
           >
             {chars.map(({ char, isHighlighted }, charIdx) => {
               const charFontWeight: React.CSSProperties["fontWeight"] =
@@ -96,6 +97,7 @@ export default function TypeAhead({
         {...inputProps}
         type="text"
         value={inputV}
+        data-testid="typeahead-input"
         onChange={(e) => setInputV(e.target.value)}
       />
 
