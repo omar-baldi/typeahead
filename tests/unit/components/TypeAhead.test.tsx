@@ -52,4 +52,12 @@ describe("TypeAhead", () => {
       ])
     );
   });
+
+  it("should not render any typeahead options if none of them match the value searched", async () => {
+    const debounceValue = 1000;
+    const wrapper = render(<TypeAhead data={typeaheadData} debounce={debounceValue} />);
+    await mockTypeaheadInputChangeEvent(wrapper, "_", debounceValue);
+    const typeaheadOptions = await wrapper.queryAllByTestId("typeahead-option");
+    expect(typeaheadOptions).toHaveLength(0);
+  });
 });
